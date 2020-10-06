@@ -4,6 +4,14 @@
 #include <ctype.h>
 #include <sys/wait.h>
 #include <sys/mman.h>
+#include <sys/time.h>
+
+double wctime()
+{
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return tv.tv_sec + 1E-6 * tv.tv_usec;
+}
 
 // Attempts to open file
 FILE *openFile(char *filename)
@@ -33,18 +41,18 @@ void outputResults(int *charCount)
             numLetters += charCount[i];
     }
 
-    printf("\n  Letter Frequencies\n\n");
-    printf(" Char   |  Count\t  [%%] \t\tVisual\n");
-    printf("------- | -----------------------------------------------------------\n");
+    // printf("\n  Letter Frequencies\n\n");
+    // printf(" Char   |  Count\t  [%%] \t\tVisual\n");
+    // printf("------- | -----------------------------------------------------------\n");
 
-    for (int i = 97; i < 123; i++)
-    {
-        printf("   %c    |  %d ", i, charCount[i]);
-        printf(" \t\t[%.2f%%] \t", ((double)charCount[i] / numLetters) * 100);
-        for (int j = 0; j < charCount[i]; j++)
-            printf("∎");
-        printf("\n");
-    }
+    // for (int i = 97; i < 123; i++)
+    // {
+    //     printf("   %c    |  %d ", i, charCount[i]);
+    //     printf(" \t\t[%.2f%%] \t", ((double)charCount[i] / numLetters) * 100);
+    //     for (int j = 0; j < charCount[i]; j++)
+    //         printf("∎");
+    //     printf("\n");
+    // }
 
     printf("----------------------------------------------------------------------\n");
     printf("\n\tFile Statistics\n\n");
@@ -63,12 +71,15 @@ void outputResults(int *charCount)
  * Opens the file and counts the number of occurrences of a specific letter
  * Uses ASCII codes to keep track of the count
  */
+double start, end;
 int *countLetters(char *filename)
 {
     int *charCount;
     FILE *file;
 
     charCount = mmap(NULL, 128 * sizeof(*charCount), PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+
+    start = wctime();
 
     for (int i = 0; i < 27; i++)
     {
@@ -107,6 +118,8 @@ int *countLetters(char *filename)
     for (int i = 0; i < 27; i++)
         wait(NULL);
 
+    end = wctime();
+
     return charCount;
 }
 
@@ -125,6 +138,8 @@ int main(int argc, char *argv[])
         return 1;
 
     outputResults(countLetters(filename));
+
+    printf("\nRun time: %f secs\n", (end - start));
 
     if (fclose(file) != 0)
     {
